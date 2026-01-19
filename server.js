@@ -35,3 +35,54 @@ app.get('/allcards', async (req, res) => {
     res.status(500).json({ message: 'Server error for allcards' });
   }
 });
+
+app.delete('/deletecard/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        let connection = await mysql.createConnection(dbConfig);
+        await connection.execute('DELETE FROM cards WHERE id=' + id);
+        res.status(201).json({ message: 'Card ' + id + ' deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error - could not delete card ' + id });
+    }
+});
+
+app.put('/updatecard/:id', async (req, res) => {
+    const { id } = req.params;
+    const { card_name, card_pic } = req.body;
+    try {
+        let connection = await mysql.createConnection(dbConfig);
+        await connection.execute(
+            'UPDATE cards SET card_name=?, card_pic=? WHERE id=?',
+            [card_name, card_pic, id]
+        );
+        res.status(201).json({ message: 'Card ' + card_name + ' updated successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error - could not update card ' + card_name });
+    }
+});
+
+
+// CREATE: Add a card
+app.post('/addcard', async (req, res) => {
+  try {
+    const { card_name, card_pic } = req.body;
+
+    if (!card_name || !card_pic) {
+      return res.status(400).json({ message: 'card_name and card_pic are required' });
+    }
+
+    const connection = await mysql.createConnection(dbConfig);
+    await connection.execute(
+      'INSERT INTO cards (card_name, card_pic) VALUES (?, ?)',
+      [card_name, card_pic]
+    );
+
+    return res.status(201).json({ message: 'Card added', card_name, card_pic });
+  } catch (err) {
+    console.error('Add card error:', err);
+    return res.status(500).json({ message: 'Server error - could not add card' });
+  }
+});
