@@ -42,12 +42,14 @@ app.get('/allcards', async (req, res) => {
 // DELETE
 // =====================
 app.delete('/deletecard/:id', async (req, res) => {
-  const { id } = req.params;
-  let connection;
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: 'Invalid card ID' });
+  }
 
   try {
-    connection = await mysql.createConnection(dbConfig);
-    const [result] = await connection.execute(
+    const [result] = await pool.execute(
       'DELETE FROM cards WHERE id = ?',
       [id]
     );
@@ -58,28 +60,28 @@ app.delete('/deletecard/:id', async (req, res) => {
 
     res.json({ message: `Card ${id} deleted successfully` });
   } catch (err) {
-    console.error('Delete error:', err.message);
-    res.status(500).json({ message: 'Could not delete card: ' + err.message });
-  } finally {
-    if (connection) await connection.end();
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Could not delete card' });
   }
 });
 
-// =====================
-// UPDATE
-// =====================
+
 app.put('/updatecard/:id', async (req, res) => {
-  const { id } = req.params;
+  const id = Number(req.params.id);
   const { card_name, card_pic } = req.body;
-  let connection;
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: 'Invalid card ID' });
+  }
 
   if (!card_name || !card_pic) {
-    return res.status(400).json({ message: 'card_name and card_pic required' });
+    return res.status(400).json({
+      message: 'card_name and card_pic are required'
+    });
   }
 
   try {
-    connection = await mysql.createConnection(dbConfig);
-    const [result] = await connection.execute(
+    const [result] = await pool.execute(
       'UPDATE cards SET card_name = ?, card_pic = ? WHERE id = ?',
       [card_name, card_pic, id]
     );
@@ -90,12 +92,11 @@ app.put('/updatecard/:id', async (req, res) => {
 
     res.json({ message: `Card ${id} updated successfully` });
   } catch (err) {
-    console.error(err);
+    console.error('Update error:', err);
     res.status(500).json({ message: 'Could not update card' });
-  } finally {
-    if (connection) await connection.end();
   }
 });
+
 
 // =====================
 // CREATE
