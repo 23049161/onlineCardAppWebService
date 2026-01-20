@@ -49,7 +49,7 @@ app.delete('/deletecard/:id', async (req, res) => {
     connection = await mysql.createConnection(dbConfig);
     const [result] = await connection.execute(
       'DELETE FROM cards WHERE id = ?',
-      [parseInt(id)]
+      [id]
     );
 
     if (result.affectedRows === 0) {
