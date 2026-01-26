@@ -24,15 +24,15 @@ app.listen(port, () => {
 // =====================
 // READ
 // =====================
-app.get('/allcards', async (req, res) => {
+app.get('/alltools', async (req, res) => {
   let connection;
   try {
     connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute('SELECT * FROM cards');
+    const [rows] = await connection.execute('SELECT * FROM tools');
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error for allcards' });
+    res.status(500).json({ message: 'Server error for alltools' });
   } finally {
     if (connection) await connection.end();
   }
@@ -41,59 +41,59 @@ app.get('/allcards', async (req, res) => {
 // =====================
 // DELETE
 // =====================
-app.delete('/deletecard/:id', async (req, res) => {
+app.delete('/deletetool/:id', async (req, res) => {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid card ID' });
+    return res.status(400).json({ message: 'Invalid tool ID' });
   }
 
   try {
     const [result] = await pool.execute(
-      'DELETE FROM cards WHERE id = ?',
+      'DELETE FROM tools WHERE id = ?',
       [id]
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Card not found' });
+      return res.status(404).json({ message: 'tool not found' });
     }
 
-    res.json({ message: `Card ${id} deleted successfully` });
+    res.json({ message: `tool ${id} deleted successfully` });
   } catch (err) {
     console.error('Delete error:', err);
-    res.status(500).json({ message: 'Could not delete card' });
+    res.status(500).json({ message: 'Could not delete tool' });
   }
 });
 
 
-app.put('/updatecard/:id', async (req, res) => {
+app.put('/updatetool/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { card_name, card_pic } = req.body;
+  const { tool_name, tool_pic } = req.body;
 
   if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid card ID' });
+    return res.status(400).json({ message: 'Invalid tool ID' });
   }
 
-  if (!card_name || !card_pic) {
+  if (!tool_name || !tool_pic) {
     return res.status(400).json({
-      message: 'card_name and card_pic are required'
+      message: 'tool_name and tool_pic are required'
     });
   }
 
   try {
     const [result] = await pool.execute(
-      'UPDATE cards SET card_name = ?, card_pic = ? WHERE id = ?',
-      [card_name, card_pic, id]
+      'UPDATE tools SET tool_name = ?, tool_pic = ? WHERE id = ?',
+      [tool_name, tool_pic, id]
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Card not found' });
+      return res.status(404).json({ message: 'tool not found' });
     }
 
-    res.json({ message: `Card ${id} updated successfully` });
+    res.json({ message: `tool ${id} updated successfully` });
   } catch (err) {
     console.error('Update error:', err);
-    res.status(500).json({ message: 'Could not update card' });
+    res.status(500).json({ message: 'Could not update tool' });
   }
 });
 
@@ -101,25 +101,25 @@ app.put('/updatecard/:id', async (req, res) => {
 // =====================
 // CREATE
 // =====================
-app.post('/addcard', async (req, res) => {
-  const { card_name, card_pic } = req.body;
+app.post('/addtool', async (req, res) => {
+  const { tool_name, tool_pic } = req.body;
   let connection;
 
-  if (!card_name || !card_pic) {
-    return res.status(400).json({ message: 'card_name and card_pic required' });
+  if (!tool_name || !tool_pic) {
+    return res.status(400).json({ message: 'tool_name and tool_pic required' });
   }
 
   try {
     connection = await mysql.createConnection(dbConfig);
     await connection.execute(
-      'INSERT INTO cards (card_name, card_pic) VALUES (?, ?)',
-      [card_name, card_pic]
+      'INSERT INTO tools (tool_name, tool_pic) VALUES (?, ?)',
+      [tool_name, tool_pic]
     );
 
-    res.status(201).json({ message: 'Card added successfully' });
+    res.status(201).json({ message: 'tool added successfully' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Could not add card' });
+    res.status(500).json({ message: 'Could not add tool' });
   } finally {
     if (connection) await connection.end();
   }
