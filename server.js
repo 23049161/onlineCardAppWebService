@@ -3,19 +3,9 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 require('dotenv').config();
 
-const app = express();
 const port = 3000;
 
-// =====================
-// MIDDLEWARE
-// =====================
-app.use(cors());
-app.use(express.json());
-
-// =====================
-// DB POOL
-// =====================
-const pool = mysql.createPool({
+const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -24,11 +14,15 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-});
+};
 
-// =====================
-// SERVER
-// =====================
+// ✅ CREATE POOL ONCE
+const pool = mysql.createPool(dbConfig);
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
@@ -42,7 +36,7 @@ app.get('/alltools', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Failed to fetch tools' });
+    res.status(500).json({ message: 'Server error for alltools' });
   }
 });
 
@@ -53,7 +47,9 @@ app.post('/addtool', async (req, res) => {
   const { tool_name, tool_pic } = req.body;
 
   if (!tool_name || !tool_pic) {
-    return res.status(400).json({ message: 'tool_name and tool_pic required' });
+    return res.status(400).json({
+      message: 'tool_name and tool_pic required',
+    });
   }
 
   try {
@@ -62,10 +58,10 @@ app.post('/addtool', async (req, res) => {
       [tool_name, tool_pic]
     );
 
-    res.status(201).json({ message: 'Tool added successfully' });
+    res.status(201).json({ message: 'tool added successfully' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Failed to add tool' });
+    res.status(500).json({ message: 'Could not add tool' });
   }
 });
 
@@ -96,10 +92,10 @@ app.put('/updatetool/:id', async (req, res) => {
       return res.status(404).json({ message: 'Tool not found' });
     }
 
-    res.json({ message: 'Tool updated successfully' });
+    res.json({ message: `tool ${id} updated successfully` });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to update tool' });
+    console.error('Update error:', err);
+    res.status(500).json({ message: 'Could not update tool' });
   }
 });
 
@@ -123,9 +119,9 @@ app.delete('/deletetool/:id', async (req, res) => {
       return res.status(404).json({ message: 'Tool not found' });
     }
 
-    res.json({ message: 'Tool deleted successfully' });
+    res.json({ message: `tool ${id} deleted successfully` });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to delete tool' });
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Could not delete tool' });
   }
 });
