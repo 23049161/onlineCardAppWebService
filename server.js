@@ -72,12 +72,12 @@ app.post('/addtool', async (req, res) => {
 // =====================
 // UPDATE — UPDATE TOOL
 // =====================
-app.put('/updatetool/:id', async (req, res) => {
-    const id = Number(req.params.id);
+app.put('/updatetool/:idtoolstools', async (req, res) => {
+    const idtools = Number(req.params.idtools);
     const { tool_name, tool_pic } = req.body;
 
-    if (!Number.isInteger(id)) {
-        return res.status(400).json({ message: 'Invalid tool ID' });
+    if (!Number.isInteger(idtools)) {
+        return res.status(400).json({ message: 'Invalidtools tool idtools' });
     }
 
     if (!tool_name || !tool_pic) {
@@ -88,15 +88,15 @@ app.put('/updatetool/:id', async (req, res) => {
 
     try {
         const [result] = await pool.execute(
-            'UPDATE tools SET tool_name = ?, tool_pic = ? WHERE id = ?',
-            [tool_name, tool_pic, id]
+            'UPDATE tools SET tool_name = ?, tool_pic = ? WHERE idtools = ?',
+            [tool_name, tool_pic, idtools]
         );
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Tool not found' });
         }
 
-        res.json({ message: `Tool ${id} updated successfully` });
+        res.json({ message: `Tool ${idtools} updated successfully` });
     } catch (err) {
         console.error('Update error:', err);
         res.status(500).json({ message: 'Could not update tool' });
@@ -106,24 +106,24 @@ app.put('/updatetool/:id', async (req, res) => {
 // =====================
 // DELETE — DELETE TOOL
 // =====================
-app.delete('/deletetool/:id', async (req, res) => {
-    const id = Number(req.params.id);
+app.delete('/deletetool/:idtools', async (req, res) => {
+    const idtools = Number(req.params.idtools);
 
-    if (!Number.isInteger(id)) {
-        return res.status(400).json({ message: 'Invalid tool ID' });
+    if (!Number.isInteger(idtools)) {
+        return res.status(400).json({ message: 'Invalidtools tool idtools' });
     }
 
     try {
         const [result] = await pool.execute(
-            'DELETE FROM tools WHERE id = ?',
-            [id]
+            'DELETE FROM tools WHERE idtools = ?',
+            [idtools]
         );
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Tool not found' });
         }
 
-        res.json({ message: `Tool ${id} deleted successfully` });
+        res.json({ message: `Tool ${idtools} deleted successfully` });
     } catch (err) {
         console.error('Delete error:', err);
         res.status(500).json({ message: 'Could not delete tool' });
