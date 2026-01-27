@@ -1,11 +1,16 @@
-// Include the require packages
+// =====================
+// IMPORTS & CONFIG
+// =====================
 const express = require('express');
 const mysql = require('mysql2/promise');
 require('dotenv').config();
+
 const port = 3000;
 
-// database config
-const dbConfig = {
+// =====================
+// DB CONNECTION POOL
+// =====================
+const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -13,106 +18,114 @@ const dbConfig = {
     port: process.env.DB_PORT,
     waitForConnections: true,
     connectionLimit: 100,
-    queueLimit: 0
-};
+    queueLimit: 0,
+});
 
-// Initialize the Express app
+// =====================
+// APP SETUP
+// =====================
 const app = express();
-
-// Helps the app read JSON
 app.use(express.json());
 
-// Start the Server
 app.listen(port, () => {
-    console.log('Server is running on ', port);
+    console.log(`Server running on port ${port}`);
 });
 
-// ---------------------------------------------------------
-// ROUTE 1: Get all tool
-// ---------------------------------------------------------
-app.get('/alltool', async (req, res) => {
+// =====================
+// READ — GET ALL TOOLS
+// =====================
+app.get('/alltools', async (req, res) => {
     try {
-        let connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute('SELECT * FROM tools');
-        await connection.end(); // Close connection
+        const [rows] = await pool.execute('SELECT * FROM tools');
         res.json(rows);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error for alltool' });
+        console.error('Read error:', err);
+        res.status(500).json({ message: 'Server error for alltools' });
     }
 });
 
-// ---------------------------------------------------------
-// ROUTE 2: Create a new tool (FIXED)
-// ---------------------------------------------------------
+// =====================
+// CREATE — ADD TOOL
+// =====================
 app.post('/addtool', async (req, res) => {
-    // FIX 1: We now extract 'id' from the body as well
-    const { id, tool_name, tool_pic } = req.body; 
+    const { tool_name, tool_pic } = req.body;
+
+    if (!tool_name || !tool_pic) {
+        return res.status(400).json({
+            message: 'tool_name and tool_pic are required',
+        });
+    }
 
     try {
-        let connection = await mysql.createConnection(dbConfig);
-        
-        await connection.execute(
-            'INSERT INTO tools (id, tool_name, tool_pic) VALUES (?, ?, ?)', 
-            [id, tool_name, tool_pic]
+        await pool.execute(
+            'INSERT INTO tools (tool_name, tool_pic) VALUES (?, ?)',
+            [tool_name, tool_pic]
         );
-        
-        await connection.end();
-        res.status(201).json({ message: 'tool ' + tool_name + ' added successfully' });
+
+        res.status(201).json({ message: 'Tool added successfully' });
     } catch (err) {
-        console.error(err); // This prints the REAL error to your terminal
-        res.status(500).json({ message: 'Server error - could not add card ' + tool_name });
+        console.error('Create error:', err);
+        res.status(500).json({ message: 'Could not add tool' });
     }
 });
 
-// ---------------------------------------------------------
-// ROUTE 3: Edit/Update a tool
-// ---------------------------------------------------------
+// =====================
+// UPDATE — UPDATE TOOL
+// =====================
 app.put('/updatetool/:id', async (req, res) => {
-    const { id } = req.params; // Get the ID from the URL
-    const { tool_name, tool_pic } = req.body; // Get new data from body
+    const id = Number(req.params.id);
+    const { tool_name, tool_pic } = req.body;
+
+    if (!Number.isInteger(id)) {
+        return res.status(400).json({ message: 'Invalid tool ID' });
+    }
+
+    if (!tool_name || !tool_pic) {
+        return res.status(400).json({
+            message: 'tool_name and tool_pic are required',
+        });
+    }
 
     try {
-        let connection = await mysql.createConnection(dbConfig);
-        const [result] = await connection.execute(
+        const [result] = await pool.execute(
             'UPDATE tools SET tool_name = ?, tool_pic = ? WHERE id = ?',
             [tool_name, tool_pic, id]
         );
-        await connection.end();
 
-        // Check if any row was actually affected
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'tool not found with ID: ' + id });
+            return res.status(404).json({ message: 'Tool not found' });
         }
 
-        res.json({ message: 'tool updated successfully' });
+        res.json({ message: `Tool ${id} updated successfully` });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error updating tool' });
+        console.error('Update error:', err);
+        res.status(500).json({ message: 'Could not update tool' });
     }
 });
 
-// ---------------------------------------------------------
-// ROUTE 4: Delete a tool 
-// ---------------------------------------------------------
+// =====================
+// DELETE — DELETE TOOL
+// =====================
 app.delete('/deletetool/:id', async (req, res) => {
-    const { id } = req.params; // Get the ID from the URL
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+        return res.status(400).json({ message: 'Invalid tool ID' });
+    }
 
     try {
-        let connection = await mysql.createConnection(dbConfig);
-        const [result] = await connection.execute(
+        const [result] = await pool.execute(
             'DELETE FROM tools WHERE id = ?',
             [id]
         );
-        await connection.end();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'tool not found with ID: ' + id });
+            return res.status(404).json({ message: 'Tool not found' });
         }
 
-        res.json({ message: 'tool deleted successfully' });
+        res.json({ message: `Tool ${id} deleted successfully` });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error deleting tool' });
+        console.error('Delete error:', err);
+        res.status(500).json({ message: 'Could not delete tool' });
     }
 });
