@@ -28,91 +28,91 @@ app.listen(port, () => {
 });
 
 // ---------------------------------------------------------
-// ROUTE 1: Get all pokemon
+// ROUTE 1: Get all tool
 // ---------------------------------------------------------
-app.get('/allpokemon', async (req, res) => {
+app.get('/alltool', async (req, res) => {
     try {
         let connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute('SELECT * FROM wk8ex.pokemon');
+        const [rows] = await connection.execute('SELECT * FROM tools');
         await connection.end(); // Close connection
         res.json(rows);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error for allpokemon' });
+        res.status(500).json({ message: 'Server error for alltool' });
     }
 });
 
 // ---------------------------------------------------------
-// ROUTE 2: Create a new pokemon (FIXED)
+// ROUTE 2: Create a new tool (FIXED)
 // ---------------------------------------------------------
-app.post('/addpokemon', async (req, res) => {
+app.post('/addtool', async (req, res) => {
     // FIX 1: We now extract 'id' from the body as well
-    const { id, pokemon_name, pokemon_pic } = req.body; 
+    const { id, tool_name, tool_pic } = req.body; 
 
     try {
         let connection = await mysql.createConnection(dbConfig);
         
         await connection.execute(
-            'INSERT INTO wk8ex.pokemon (id, pokemon_name, pokemon_pic) VALUES (?, ?, ?)', 
-            [id, pokemon_name, pokemon_pic]
+            'INSERT INTO tools (id, tool_name, tool_pic) VALUES (?, ?, ?)', 
+            [id, tool_name, tool_pic]
         );
         
         await connection.end();
-        res.status(201).json({ message: 'Pokemon ' + pokemon_name + ' added successfully' });
+        res.status(201).json({ message: 'tool ' + tool_name + ' added successfully' });
     } catch (err) {
         console.error(err); // This prints the REAL error to your terminal
-        res.status(500).json({ message: 'Server error - could not add card ' + pokemon_name });
+        res.status(500).json({ message: 'Server error - could not add card ' + tool_name });
     }
 });
 
 // ---------------------------------------------------------
-// ROUTE 3: Edit/Update a pokemon
+// ROUTE 3: Edit/Update a tool
 // ---------------------------------------------------------
-app.put('/updatepokemon/:id', async (req, res) => {
+app.put('/updatetool/:id', async (req, res) => {
     const { id } = req.params; // Get the ID from the URL
-    const { pokemon_name, pokemon_pic } = req.body; // Get new data from body
+    const { tool_name, tool_pic } = req.body; // Get new data from body
 
     try {
         let connection = await mysql.createConnection(dbConfig);
         const [result] = await connection.execute(
-            'UPDATE wk8ex.pokemon SET pokemon_name = ?, pokemon_pic = ? WHERE id = ?',
-            [pokemon_name, pokemon_pic, id]
+            'UPDATE tools SET tool_name = ?, tool_pic = ? WHERE id = ?',
+            [tool_name, tool_pic, id]
         );
         await connection.end();
 
         // Check if any row was actually affected
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Pokemon not found with ID: ' + id });
+            return res.status(404).json({ message: 'tool not found with ID: ' + id });
         }
 
-        res.json({ message: 'Pokemon updated successfully' });
+        res.json({ message: 'tool updated successfully' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Error updating pokemon' });
+        res.status(500).json({ message: 'Error updating tool' });
     }
 });
 
 // ---------------------------------------------------------
-// ROUTE 4: Delete a pokemon 
+// ROUTE 4: Delete a tool 
 // ---------------------------------------------------------
-app.delete('/deletepokemon/:id', async (req, res) => {
+app.delete('/deletetool/:id', async (req, res) => {
     const { id } = req.params; // Get the ID from the URL
 
     try {
         let connection = await mysql.createConnection(dbConfig);
         const [result] = await connection.execute(
-            'DELETE FROM wk8ex.pokemon WHERE id = ?',
+            'DELETE FROM tools WHERE id = ?',
             [id]
         );
         await connection.end();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Pokemon not found with ID: ' + id });
+            return res.status(404).json({ message: 'tool not found with ID: ' + id });
         }
 
-        res.json({ message: 'Pokemon deleted successfully' });
+        res.json({ message: 'tool deleted successfully' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Error deleting pokemon' });
+        res.status(500).json({ message: 'Error deleting tool' });
     }
 });
